@@ -46,9 +46,12 @@ Method: POST
 URL: http://127.0.0.1:8000/api/messages/send
 Body (raw, JSON):
 json
-Copier le code
+Скопировать код
 {
   "message_text": "привет!",
   "from_phone": "790929911111",
   "username": "testname"
 }
+
+
+Вот дополнительный репозиторий GitHub, где можно увидеть время, когда я загрузил программу на GitHub: https://github.com/revoxlol/Telegram-client/
