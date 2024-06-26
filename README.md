@@ -16,7 +16,7 @@ INSTALLED_APPS = [
     'api',
 ]
 ``
-Please don't forget to add your ID and Hash KEY in the "api/telegram_client.py"
+Пожалуйста, не забудьте добавить свой ID and Hash KEY in the "api/telegram_client.py"
 
 Testing : 
 Почтальон/Бессонница:
