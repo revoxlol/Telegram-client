@@ -1,0 +1,129 @@
+<!-- telegram_client/templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram Client</title>
+</head>
+<body>
+    <h1>Welcome to the Telegram Client</h1>
+
+    <h2>Login</h2>
+    <form id="login-form">
+        {% csrf_token %}
+        <input type="text" id="phone" placeholder="Enter your phone number" required>
+        <button type="submit">Login</button>
+    </form>
+    <div id="qr-code"></div>
+    <div id="login-status"></div>
+
+    <h2>Send Message</h2>
+    <form id="message-form">
+        {% csrf_token %}
+        <input type="text" id="username" placeholder="Enter username" required>
+        <input type="text" id="message_text" placeholder="Enter your message" required>
+        <button type="submit">Send</button>
+    </form>
+    <div id="message-status"></div>
+
+    <h2>Messages</h2>
+    <button id="load-messages">Load Messages</button>
+    <div id="messages"></div>
+
+    <script>
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        const csrftoken = getCookie('csrftoken');
+
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const phone = document.getElementById('phone').value;
+            fetch('/api/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify({ phone })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const qrCodeDiv = document.getElementById('qr-code');
+                qrCodeDiv.innerHTML = `<img src="${data.qr_link_url}" alt="QR Code">`;
+                checkLoginStatus(phone);
+            })
+            .catch(error => console.error('Error:', error));
+        });
+
+        function checkLoginStatus(phone) {
+            fetch(`/api/check/login?phone=${phone}`)
+            .then(response => response.json())
+            .then(data => {
+                const loginStatusDiv = document.getElementById('login-status');
+                loginStatusDiv.innerHTML = `Status: ${data.status}`;
+                if (data.status === 'logined') {
+                    loadMessages(phone, '');
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        document.getElementById('message-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const message_text = document.getElementById('message_text').value;
+            const username = document.getElementById('username').value;
+            fetch('/api/messages/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify({
+                    message_text,
+                    from_phone: document.getElementById('phone').value,
+                    username
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const messageStatusDiv = document.getElementById('message-status');
+                messageStatusDiv.innerHTML = `Status: ${data.status}`;
+            })
+            .catch(error => console.error('Error:', error));
+        });
+
+        document.getElementById('load-messages').addEventListener('click', function() {
+            const phone = document.getElementById('phone').value;
+            const username = document.getElementById('username').value;
+            loadMessages(phone, username);
+        });
+
+        function loadMessages(phone, username) {
+            fetch(`/api/messages?phone=${phone}&uname=${username}`)
+            .then(response => response.json())
+            .then(data => {
+                const messagesDiv = document.getElementById('messages');
+                messagesDiv.innerHTML = data.messages.map(msg => `
+                    <div>
+                        <strong>${msg.username}:</strong> ${msg.message_text}
+                    </div>
+                `).join('');
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    </script>
+</body>
+</html>
